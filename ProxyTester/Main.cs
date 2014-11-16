@@ -27,11 +27,22 @@ namespace Netcrave.ProxyTool.Standalone
 	{
 		internal static void Main (string[] args)
 		{
-			Console.WriteLine ("Hello World!");
+			Console.WriteLine ("Proxy Checker Starting...");
 			SettingsManager.Instance.Log = Console.Out;
 			ProxyManager.Instance.Log = Console.Out;
 			ProxyManager.Instance.CheckingIfProxyIsWorking += HandleCheckingIfProxyIsWorking;
 			ProxyManager.Instance.StartWorker();
+			Console.WriteLine ("Press escape key to stop the checker");
+		ReadKey:
+			ConsoleKeyInfo key = Console.ReadKey ();
+			if(key.Key == ConsoleKey.F1)
+			{
+				ProxyManager.Instance.SaveTestedProxiesToXMLFile();
+			}
+			if(key.Key != ConsoleKey.Escape)
+			{
+				goto ReadKey;
+			}			
 		}
 		
 		/// <summary>
@@ -49,13 +60,11 @@ namespace Netcrave.ProxyTool.Standalone
 			{		
 				// First lets check if we can get a connection out to ifconfig.me, get an XML result and unserialize it
 				// it fails an exception will likely be thrown and if nothing else the object will have no meaningful data				
-				if(!ProxyManager.TestConnectivityToIfconfigMe(e))
-					return;
-				else
+				if(ProxyManager.TestConnectivityToIfconfigMe(e))
 				{
 					Console.WriteLine("here's a working proxy: " + e.httpp.url + ":" + e.httpp.port.ToString());
 					e.handled = true;
-				}
+				}				
 			}
 			catch(Exception wex)
 			{

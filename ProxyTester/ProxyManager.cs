@@ -67,7 +67,6 @@ namespace Netcrave.ProxyTool
                     {
                         instance = new ProxyManager ();
                     }
-
                     return instance;
                 }
             }
@@ -163,13 +162,9 @@ namespace Netcrave.ProxyTool
 					CheckingIfProxyIsWorking(this, args);
 					if(args.handled)
 					{
-						//Log.WriteLine("found working proxy, logging: " + prx.url + ":" + prx.port.ToString());						
+						Log.WriteLine("found working proxy, logging: " + prx.url + ":" + prx.port.ToString());						
 						AddProxyToUsableList(prx);							
-					}
-					else
-					{												
-						// throw it on the ground						
-					}	
+					}			
 				}
 				catch(Exception ex)
 				{
@@ -205,6 +200,10 @@ namespace Netcrave.ProxyTool
 		{
 			lock(syncRoot)
 			{
+				if(SettingsManager.Instance.settings.UseAnonymousProxiesOnly)
+				{					
+					return(CheckedProxies.Where(e => e.enabled == true && string.IsNullOrEmpty(e.IfconfigMeInfo.forwarded)).Single());		
+				}				
 				return(CheckedProxies.Where(e => e.enabled == true).Single());				
 			}
 		}
@@ -217,8 +216,10 @@ namespace Netcrave.ProxyTool
 			using(ProxyTestWebClient wc = new ProxyTestWebClient())
 			{
 				wc.Headers.Add ("User-Agent", SettingsManager.Instance.settings.HTTPUserAgent);						
+				wc.Headers.Add ("X-Forward-For", "192.168.0.100");
+				//wc.Headers.Add ("X-Real-IP", "8.8.8.8");
 				wc.Proxy = new WebProxy(e.httpp.url, e.httpp.port);
-				//Console.WriteLine("HandleCheckingIfProxyIsWorking called");
+				
 				using(XmlReader xr = XmlReader.Create(wc.OpenRead("http://ifconfig.me/all.xml")))
 				{						
 					var serializer = new XmlSerializer (typeof(Netcrave.ifconfig.me.schema.info));
@@ -228,14 +229,44 @@ namespace Netcrave.ProxyTool
 					
 					if(!string.IsNullOrEmpty(result.ip_addr))
 					{
-						ProxyManager.instance.Log.WriteLine("found proxy, ifconfig.me ipaddr: " + result.ip_addr);
+						//ProxyManager.instance.Log.WriteLine("found proxy, ifconfig.me ipaddr: " + result.ip_addr);
 						e.httpp.IfconfigMeInfo = result;
 						return true;
 					}
 				}
 			}
-			ProxyManager.instance.Log.WriteLine("failed to connect to ifconfig.me");
+			//ProxyManager.instance.Log.WriteLine("failed to connect to ifconfig.me");
 			return false;
+		}
+		
+		/// <summary>
+		/// Saves the tested proxies to XML file.
+		/// </summary>
+		public void SaveTestedProxiesToXMLFile()
+		{
+			lock(syncRoot)
+			{
+				try
+				{
+					if(File.Exists("checked_proxies.xml"))
+					{
+						File.Delete("checked_proxies.xml");
+					}				
+	                using (FileStream file = File.Create ("checked_proxies.xml"))
+	                {
+	                    var serializer = new XmlSerializer (typeof(HTTPProxy[]));
+	                    using (XmlWriter writer = XmlWriter.Create(file, new XmlWriterSettings { Indent = true, NewLineOnAttributes = true }))
+	                    {
+	                        serializer.Serialize (writer, CheckedProxies.ToArray ());
+	                    }
+	                }
+	            }
+	            catch (Exception ex)
+	            {
+	                Log.WriteLine(ex.Message + " : " + ex.StackTrace);
+	            }
+				Log.WriteLine("saved proxies to disk");
+			}
 		}
 	}
 }

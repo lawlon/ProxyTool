@@ -23,6 +23,7 @@ namespace Netcrave.ProxyTool
     {
 		public string ProxyRSSList;
 		public string HTTPUserAgent;
+		public bool UseAnonymousProxiesOnly;
 		public int MaxThreads;
 		
         public Settings ()

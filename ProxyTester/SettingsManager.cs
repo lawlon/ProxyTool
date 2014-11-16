@@ -45,7 +45,7 @@ namespace Netcrave.ProxyTool
         {
             bool newConfig = false;
 
-            if (!File.Exists ("settings.xml"))
+            if (!File.Exists ("proxytool_settings.xml"))
             {
                 newConfig = true;
             }
@@ -58,6 +58,7 @@ namespace Netcrave.ProxyTool
                     {                   
 						ProxyRSSList = "http://tools.rosinstrument.com/proxy/plab100.xml",
 						HTTPUserAgent = "Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0",
+						UseAnonymousProxiesOnly = true, // zealous spam filters check X-Forward-For
 						MaxThreads = 30,
                     };
                     var serializer = new XmlSerializer (typeof(Settings));
