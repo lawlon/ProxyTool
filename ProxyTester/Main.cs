@@ -31,16 +31,25 @@ namespace Netcrave.ProxyTool.Standalone
 			SettingsManager.Instance.Log = Console.Out;
 			ProxyManager.Instance.Log = Console.Out;
 			ProxyManager.Instance.CheckingIfProxyIsWorking += HandleCheckingIfProxyIsWorking;
-			ProxyManager.Instance.GetWorkingHttpProxies();
+			ProxyManager.Instance.StartWorker();
 		}
 		
+		/// <summary>
+		/// Handles the checking if proxy is working.
+		/// </summary>
+		/// <param name='sender'>
+		/// Sender.
+		/// </param>
+		/// <param name='e'>
+		/// E.
+		/// </param>
 		static void HandleCheckingIfProxyIsWorking (object sender, CheckProxyIsWorkingEventArgs e)
         {
 			try
 			{		
 				// First lets check if we can get a connection out to ifconfig.me, get an XML result and unserialize it
 				// it fails an exception will likely be thrown and if nothing else the object will have no meaningful data				
-				if(!ProxyManager.Instance.TestConnectivityToIfconfigMe(e))
+				if(!ProxyManager.TestConnectivityToIfconfigMe(e))
 					return;
 				else
 				{

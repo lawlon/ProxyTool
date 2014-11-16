@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 //using skmFeedFormatters; // for RSS1.0, 
 using System.ServiceModel.Syndication; // for RSS2.0
+using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 
@@ -47,12 +48,13 @@ namespace Netcrave.ProxyTool
 		private List<HTTPProxy> HTTPProxies = new List<HTTPProxy>();
 		private List<HTTPProxy> CheckedProxies = new List<HTTPProxy>();
 		public delegate void CheckProxyIsWorkingEventHandler(object sender, CheckProxyIsWorkingEventArgs e);
-		public event CheckProxyIsWorkingEventHandler CheckingIfProxyIsWorking;
-		
+		public event CheckProxyIsWorkingEventHandler CheckingIfProxyIsWorking;		
 		public TextWriter Log = TextWriter.Null;
+		private Thread t; 
 
         private ProxyManager ()
         {
+			
         }
 		
         public static ProxyManager Instance
@@ -70,7 +72,17 @@ namespace Netcrave.ProxyTool
                 }
             }
         }
-					
+			
+		/// <summary>
+		/// Starts the worker.
+		/// </summary>
+		public void StartWorker()
+		{
+			if(t != null && t.ThreadState == System.Threading.ThreadState.Running)
+				return;
+			t = new Thread(new ThreadStart(this.GetWorkingHttpProxies));
+			t.Start();
+		}
 		/// <summary>
 		/// Loads the HTTP proxies from RSS feed.
 		/// </summary>
@@ -123,7 +135,7 @@ namespace Netcrave.ProxyTool
 		/// <returns>
 		/// The working proxy.
 		/// </returns>
-		public void GetWorkingHttpProxies()
+		private void GetWorkingHttpProxies()
 		{
 		begin:
 			
@@ -182,18 +194,7 @@ namespace Netcrave.ProxyTool
 			LoadHTTPProxiesFromRSSFeed();				
 			goto begin;
 		}
-		
-		/// <summary>
-		/// Initializes a new instance of the <see cref="JobFinder.ProxyManager"/> class.
-		/// </summary>
-		public void Prime()
-		{
-			lock(syncRoot)
-			{
-				LoadHTTPProxiesFromRSSFeed();
-			}
-		}
-		
+				
 		/// <summary>
 		/// Gets a working (tested) http proxy.
 		/// </summary>
@@ -211,7 +212,7 @@ namespace Netcrave.ProxyTool
 		/// <summary>
 		/// Tests the connectivity to ifconfig.me
 		/// </summary>
-		public bool TestConnectivityToIfconfigMe(CheckProxyIsWorkingEventArgs e)
+		public static bool TestConnectivityToIfconfigMe(CheckProxyIsWorkingEventArgs e)
 		{
 			using(ProxyTestWebClient wc = new ProxyTestWebClient())
 			{
@@ -227,13 +228,13 @@ namespace Netcrave.ProxyTool
 					
 					if(!string.IsNullOrEmpty(result.ip_addr))
 					{
-						Log.WriteLine("found proxy, ifconfig.me ipaddr: " + result.ip_addr);
+						ProxyManager.instance.Log.WriteLine("found proxy, ifconfig.me ipaddr: " + result.ip_addr);
 						e.httpp.IfconfigMeInfo = result;
 						return true;
 					}
 				}
 			}
-			Log.WriteLine("failed to connect to ifconfig.me");
+			ProxyManager.instance.Log.WriteLine("failed to connect to ifconfig.me");
 			return false;
 		}
 	}
