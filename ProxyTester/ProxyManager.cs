@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Xml;
+using System.Xml.Serialization;
 using System.Linq;
 using System.Collections.Generic;
 //using skmFeedFormatters; // for RSS1.0, 
@@ -33,7 +34,7 @@ namespace Netcrave.ProxyTool
 	public class CheckProxyIsWorkingEventArgs 
 	{
 		public bool handled = false;
-		public HTTPProxy httpp; 
+		public HTTPProxy httpp; 		
 	}
 	
 	/// <summary>
@@ -44,7 +45,7 @@ namespace Netcrave.ProxyTool
 		private static object syncRoot = new object ();
         private static volatile ProxyManager instance;
 		private List<HTTPProxy> HTTPProxies = new List<HTTPProxy>();
-		private List<HTTPProxy> GoodProxies = new List<HTTPProxy>();
+		private List<HTTPProxy> CheckedProxies = new List<HTTPProxy>();
 		public delegate void CheckProxyIsWorkingEventHandler(object sender, CheckProxyIsWorkingEventArgs e);
 		public event CheckProxyIsWorkingEventHandler CheckingIfProxyIsWorking;
 		
@@ -102,7 +103,7 @@ namespace Netcrave.ProxyTool
 		}
 		
 		/// <summary>
-		/// Blacklists the proxy.
+		/// Adds proxy usable list 
 		/// </summary>
 		/// <param name='prx'>
 		/// Prx.
@@ -111,7 +112,8 @@ namespace Netcrave.ProxyTool
 		{
 			lock(syncRoot)
 			{
-				GoodProxies.Add(prx);
+				// TODO check if exists
+				CheckedProxies.Add(prx);
 			}
 		}
 		
@@ -136,7 +138,12 @@ namespace Netcrave.ProxyTool
 				LoadHTTPProxiesFromRSSFeed();
 			}
 			
-			Parallel.ForEach(HTTPProxies, new ParallelOptions { MaxDegreeOfParallelism = 100 }, prx =>
+			ParallelOptions po = new ParallelOptions 			
+			{ 
+				MaxDegreeOfParallelism = SettingsManager.Instance.settings.MaxThreads
+			};
+			
+			Parallel.ForEach(HTTPProxies, po, prx =>
 			{
 				try 
 				{					
@@ -154,7 +161,7 @@ namespace Netcrave.ProxyTool
 				}
 				catch(Exception ex)
 				{
-					Console.WriteLine("unknown error: " + ex.Message);
+					Log.WriteLine("unknown error: " + ex.Message);
 				}
 			});
 		    
@@ -185,6 +192,49 @@ namespace Netcrave.ProxyTool
 			{
 				LoadHTTPProxiesFromRSSFeed();
 			}
+		}
+		
+		/// <summary>
+		/// Gets a working (tested) http proxy.
+		/// </summary>
+		/// <returns>
+		/// The working http proxy.
+		/// </returns>
+		public HTTPProxy GetWorkingHttpProxy()
+		{
+			lock(syncRoot)
+			{
+				return(CheckedProxies.Where(e => e.enabled == true).Single());				
+			}
+		}
+		
+		/// <summary>
+		/// Tests the connectivity to ifconfig.me
+		/// </summary>
+		public bool TestConnectivityToIfconfigMe(CheckProxyIsWorkingEventArgs e)
+		{
+			using(ProxyTestWebClient wc = new ProxyTestWebClient())
+			{
+				wc.Headers.Add ("User-Agent", SettingsManager.Instance.settings.HTTPUserAgent);						
+				wc.Proxy = new WebProxy(e.httpp.url, e.httpp.port);
+				//Console.WriteLine("HandleCheckingIfProxyIsWorking called");
+				using(XmlReader xr = XmlReader.Create(wc.OpenRead("http://ifconfig.me/all.xml")))
+				{						
+					var serializer = new XmlSerializer (typeof(Netcrave.ifconfig.me.schema.info));
+					
+					Netcrave.ifconfig.me.schema.info result = 
+						(Netcrave.ifconfig.me.schema.info)serializer.Deserialize(xr);
+					
+					if(!string.IsNullOrEmpty(result.ip_addr))
+					{
+						Log.WriteLine("found proxy, ifconfig.me ipaddr: " + result.ip_addr);
+						e.httpp.IfconfigMeInfo = result;
+						return true;
+					}
+				}
+			}
+			Log.WriteLine("failed to connect to ifconfig.me");
+			return false;
 		}
 	}
 }

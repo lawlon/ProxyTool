@@ -42,9 +42,9 @@
     <Compile Include="SettingsManager.cs" />
     <Compile Include="ProxyManager.cs" />
     <Compile Include="ProxyTestWebClient.cs" />
-    <Compile Include="HTTPProxy.cs" />
-    <Compile Include="IfconfigMe.cs" />
-    <Compile Include="Settings.cs" />
+    <Compile Include="Model\IfconfigMe.cs" />
+    <Compile Include="Model\Settings.cs" />
+    <Compile Include="Model\HTTPProxy.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
@@ -56,4 +56,7 @@
       </Properties>
     </MonoDevelop>
   </ProjectExtensions>
+  <ItemGroup>
+    <Folder Include="Model\" />
+  </ItemGroup>
 </Project>

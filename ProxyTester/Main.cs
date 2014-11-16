@@ -25,7 +25,7 @@ namespace Netcrave.ProxyTool.Standalone
 {
 	class MainClass
 	{
-		public static void Main (string[] args)
+		internal static void Main (string[] args)
 		{
 			Console.WriteLine ("Hello World!");
 			SettingsManager.Instance.Log = Console.Out;
@@ -40,7 +40,7 @@ namespace Netcrave.ProxyTool.Standalone
 			{		
 				// First lets check if we can get a connection out to ifconfig.me, get an XML result and unserialize it
 				// it fails an exception will likely be thrown and if nothing else the object will have no meaningful data				
-				if(!TestConnectivityToIfconfigMe(e))
+				if(!ProxyManager.Instance.TestConnectivityToIfconfigMe(e))
 					return;
 				else
 				{
@@ -62,35 +62,6 @@ namespace Netcrave.ProxyTool.Standalone
 					Console.WriteLine("\n-----\n");
 				}
 			}
-        }
-		
-		/// <summary>
-		/// Tests the connectivity to ifconfig.me
-		/// </summary>
-		static bool TestConnectivityToIfconfigMe(CheckProxyIsWorkingEventArgs e)
-		{
-			using(ProxyTestWebClient wc = new ProxyTestWebClient())
-			{
-				wc.Headers.Add ("User-Agent", SettingsManager.Instance.settings.HTTPUserAgent);						
-				wc.Proxy = new WebProxy(e.httpp.url, e.httpp.port);
-				//Console.WriteLine("HandleCheckingIfProxyIsWorking called");
-				using(XmlReader xr = XmlReader.Create(wc.OpenRead("http://ifconfig.me/all.xml")))
-				{						
-					var serializer = new XmlSerializer (typeof(Netcrave.ifconfig.me.schema.info));
-					
-					Netcrave.ifconfig.me.schema.info result = 
-						(Netcrave.ifconfig.me.schema.info)serializer.Deserialize(xr);
-					
-					if(!string.IsNullOrEmpty(result.ip_addr))
-					{
-						Console.WriteLine("found proxy, ifconfig.me ipaddr: " + result.ip_addr);
-						e.httpp.IfconfigMeInfo = result;
-						return true;
-					}
-				}
-			}
-			Console.WriteLine("failed to connect to ifconfig.me");
-			return false;
-		}
+        }			
 	}
 }

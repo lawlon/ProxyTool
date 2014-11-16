@@ -50,7 +50,7 @@ namespace Netcrave.ProxyTool
                 newConfig = true;
             }
 
-            using (FileStream file = File.Open("settings.xml", FileMode.OpenOrCreate))
+            using (FileStream file = File.Open("proxytool_settings.xml", FileMode.OpenOrCreate))
             {
                 if (newConfig)
                 {
@@ -58,7 +58,7 @@ namespace Netcrave.ProxyTool
                     {                   
 						ProxyRSSList = "http://tools.rosinstrument.com/proxy/plab100.xml",
 						HTTPUserAgent = "Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0",
-
+						MaxThreads = 30,
                     };
                     var serializer = new XmlSerializer (typeof(Settings));
                     using (XmlWriter writer = XmlWriter.Create(file, new XmlWriterSettings { Indent = true, NewLineOnAttributes = true}))

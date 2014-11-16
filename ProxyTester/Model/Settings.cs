@@ -1,7 +1,8 @@
 using System;
 
-/// Author : Paige Thompson (paigeadele@gmail.com)
+/// <summary>
 /// Proxy Tool
+/// Author : Paige Thompson (paigeadele@gmail.com)
 /// Copyright 2014
 /// This program is free software: you can redistribute it and/or modify
 /// it under the terms of the GNU General Public License as published by
@@ -16,19 +17,18 @@ using System;
 /// You should have received a copy of the GNU General Public License
 /// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /// </summary>
-
 namespace Netcrave.ProxyTool
 {
-	public class HTTPProxy
-	{
-		public string url; 
-		public int port;
-		public Netcrave.ifconfig.me.schema.info IfconfigMeInfo;
+    public class Settings
+    {
+		public string ProxyRSSList;
+		public string HTTPUserAgent;
+		public int MaxThreads;
 		
-		public HTTPProxy ()
-		{
-					
-		}		
-	}
+        public Settings ()
+        {
+
+        }
+    }
 }
 
