@@ -40,7 +40,7 @@ namespace Netcrave.ProxyTool
 		/// </summary>
 		public ProxyTestWebClient()
 		{
-			_TimerMilliseconds = ResetTimeout();
+			//_TimerMilliseconds = ResetTimeout();
 		}
 		
 		/// <Docs>

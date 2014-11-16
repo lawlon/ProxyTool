@@ -123,8 +123,10 @@ namespace Netcrave.ProxyTool
 		{
 			lock(syncRoot)
 			{
-				// TODO check if exists
-				CheckedProxies.Add(prx);
+				if(!CheckedProxies.Exists(e => e.url == prx.url && e.port == prx.port))
+				{
+					CheckedProxies.Add(prx);
+				}
 			}
 		}
 		
@@ -162,7 +164,7 @@ namespace Netcrave.ProxyTool
 					CheckingIfProxyIsWorking(this, args);
 					if(args.handled)
 					{
-						Log.WriteLine("found working proxy, logging: " + prx.url + ":" + prx.port.ToString());						
+						Log.WriteLine("Proxy passed all tests: " + prx.url + ":" + prx.port.ToString());						
 						AddProxyToUsableList(prx);							
 					}			
 				}
@@ -216,7 +218,9 @@ namespace Netcrave.ProxyTool
 			using(ProxyTestWebClient wc = new ProxyTestWebClient())
 			{
 				wc.Headers.Add ("User-Agent", SettingsManager.Instance.settings.HTTPUserAgent);						
-				wc.Headers.Add ("X-Forward-For", "192.168.0.100");
+				// TODO figure out why nat'd browsers cause REMOTE_ADDRESS in PHP to show
+				// nat IP addresss...... I distinctly remember there being something like that...
+				//wc.Headers.Add ("X-Forward-For", "192.168.0.100");
 				//wc.Headers.Add ("X-Real-IP", "8.8.8.8");
 				wc.Proxy = new WebProxy(e.httpp.url, e.httpp.port);
 				

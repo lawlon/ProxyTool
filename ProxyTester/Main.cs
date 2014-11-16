@@ -25,6 +25,7 @@ namespace Netcrave.ProxyTool.Standalone
 {
 	class MainClass
 	{
+		
 		internal static void Main (string[] args)
 		{
 			Console.WriteLine ("Proxy Checker Starting...");
@@ -62,8 +63,23 @@ namespace Netcrave.ProxyTool.Standalone
 				// it fails an exception will likely be thrown and if nothing else the object will have no meaningful data				
 				if(ProxyManager.TestConnectivityToIfconfigMe(e))
 				{
-					Console.WriteLine("here's a working proxy: " + e.httpp.url + ":" + e.httpp.port.ToString());
-					e.handled = true;
+					if(Netcrave.ProxyTool.SettingsManager.Instance.settings.UseAnonymousProxiesOnly)
+					{
+						if(string.IsNullOrEmpty(e.httpp.IfconfigMeInfo.forwarded))
+						{
+							Console.WriteLine("found proxy, ifconfig.me ipaddr: " + e.httpp.IfconfigMeInfo.ip_addr);
+							e.handled = true;
+						}
+						else 
+						{
+							Console.WriteLine("proxy is not anonymous, not usable");					
+						}
+					}
+					else
+					{
+						Console.WriteLine("found proxy, ifconfig.me ipaddr: " + e.httpp.IfconfigMeInfo.ip_addr);
+						e.handled = true;
+					}
 				}				
 			}
 			catch(Exception wex)
