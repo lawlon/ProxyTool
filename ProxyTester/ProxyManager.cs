@@ -284,6 +284,42 @@ namespace Netcrave.ProxyTool
                 Log.WriteLine("saved proxies to disk");
             }
         }
+		public void SaveTestedProxiesToSquidCachePeerFormat()
+		{
+			  lock(syncRoot)
+            {
+                try
+                {
+                    if(File.Exists("checked_proxies.xml"))
+                    {
+                        File.Delete("checked_proxies.xml");
+                    }
+
+                    using (FileStream file = File.Create ("checked_proxies.txt"))
+                    {
+                        //var serializer = new XmlSerializer (typeof(HTTPProxy[]));
+                        //using (XmlWriter writer = XmlWriter.Create(file, new XmlWriterSettings { Indent = true, NewLineOnAttributes = true }))
+                        //{
+                        //    serializer.Serialize (writer, CheckedProxies.ToArray ());
+                        //}
+						using(StreamWriter sr = new StreamWriter(file))
+						{
+							foreach(HTTPProxy htp in CheckedProxies)
+							{
+								sr.WriteLine("cache_peer {0} parent {1} 0 round-robin no-query", htp.url, htp.port);
+							}
+						}
+                    }
+                }
+
+                catch (Exception ex)
+                {
+                    Log.WriteLine(ex.Message + " : " + ex.StackTrace);
+                }
+
+                Log.WriteLine("saved proxies to disk");
+            }
+		}
     }
 }
 

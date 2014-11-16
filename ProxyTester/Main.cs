@@ -25,6 +25,8 @@ namespace Netcrave.ProxyTool.Standalone
 {
     class MainClass
     {
+		
+		
 
         internal static void Main (string[] args)
         {
