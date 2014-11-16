@@ -21,11 +21,11 @@ namespace Netcrave.ProxyTool
 {
     public class Settings
     {
-		public string ProxyRSSList;
-		public string HTTPUserAgent;
-		public bool UseAnonymousProxiesOnly;
-		public int MaxThreads;
-		
+        public string ProxyRSSList;
+        public string HTTPUserAgent;
+        public bool UseAnonymousProxiesOnly;
+        public int MaxThreads;
+
         public Settings ()
         {
 

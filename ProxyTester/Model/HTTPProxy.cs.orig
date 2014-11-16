@@ -19,16 +19,16 @@ using System;
 
 namespace Netcrave.ProxyTool
 {
-    public class HTTPProxy
-    {
-        public string url;
-        public int port;
-        public Netcrave.ifconfig.me.schema.info IfconfigMeInfo;
-        public bool enabled = true;
-        public HTTPProxy ()
-        {
-
-        }
-    }
+	public class HTTPProxy
+	{
+		public string url; 
+		public int port;
+		public Netcrave.ifconfig.me.schema.info IfconfigMeInfo;
+		public bool enabled = true;
+		public HTTPProxy ()
+		{
+					
+		}		
+	}
 }
 

@@ -5,7 +5,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using System.Linq;
 using System.Collections.Generic;
-//using skmFeedFormatters; // for RSS1.0, 
+//using skmFeedFormatters; // for RSS1.0,
 using System.ServiceModel.Syndication; // for RSS2.0
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,34 +29,34 @@ using System.Diagnostics;
 /// </summary>
 namespace Netcrave.ProxyTool
 {
-	/// <summary>
-	/// Check proxy is working event arguments.
-	/// </summary>
-	public class CheckProxyIsWorkingEventArgs 
-	{
-		public bool handled = false;
-		public HTTPProxy httpp; 		
-	}
-	
-	/// <summary>
-	/// Proxy manager.
-	/// </summary>
-	public class ProxyManager
-	{
-		private static object syncRoot = new object ();
+    /// <summary>
+    /// Check proxy is working event arguments.
+    /// </summary>
+    public class CheckProxyIsWorkingEventArgs
+    {
+        public bool handled = false;
+        public HTTPProxy httpp;
+    }
+
+    /// <summary>
+    /// Proxy manager.
+    /// </summary>
+    public class ProxyManager
+    {
+        private static object syncRoot = new object ();
         private static volatile ProxyManager instance;
-		private List<HTTPProxy> HTTPProxies = new List<HTTPProxy>();
-		private List<HTTPProxy> CheckedProxies = new List<HTTPProxy>();
-		public delegate void CheckProxyIsWorkingEventHandler(object sender, CheckProxyIsWorkingEventArgs e);
-		public event CheckProxyIsWorkingEventHandler CheckingIfProxyIsWorking;		
-		public TextWriter Log = TextWriter.Null;
-		private Thread t; 
+        private List<HTTPProxy> HTTPProxies = new List<HTTPProxy>();
+        private List<HTTPProxy> CheckedProxies = new List<HTTPProxy>();
+        public delegate void CheckProxyIsWorkingEventHandler(object sender, CheckProxyIsWorkingEventArgs e);
+        public event CheckProxyIsWorkingEventHandler CheckingIfProxyIsWorking;
+        public TextWriter Log = TextWriter.Null;
+        private Thread t;
 
         private ProxyManager ()
         {
-			
+
         }
-		
+
         public static ProxyManager Instance
         {
             get
@@ -67,211 +67,223 @@ namespace Netcrave.ProxyTool
                     {
                         instance = new ProxyManager ();
                     }
+
                     return instance;
                 }
             }
         }
-			
-		/// <summary>
-		/// Starts the worker.
-		/// </summary>
-		public void StartWorker()
-		{
-			if(t != null && t.ThreadState == System.Threading.ThreadState.Running)
-				return;
-			t = new Thread(new ThreadStart(this.GetWorkingHttpProxies));
-			t.Start();
-		}
-		/// <summary>
-		/// Loads the HTTP proxies from RSS feed.
-		/// </summary>
-		private void LoadHTTPProxiesFromRSSFeed()
-		{
-			lock(syncRoot)
-			{				
-				using(WebClient wc = new WebClient())
-				{			
-					wc.Headers.Add ("User-Agent", SettingsManager.Instance.settings.HTTPUserAgent);
-					
-				 	using(XmlReader reader = XmlReader.Create (wc.OpenRead(SettingsManager.Instance.settings.ProxyRSSList)))
-		            {
-						 // Create a new Rss10FeedFormatter object
-	                    //Rss10FeedFormatter formatter = new Rss10FeedFormatter ();
-						// TODO mine uses 2.
-						Rss20FeedFormatter formatter = new Rss20FeedFormatter();
-						
-	                    // Parse the feed!
-	                    formatter.ReadFrom (reader);
-	
-	                    foreach (var item in formatter.Feed.Items)
-	                    {
-							string[] spl = item.Title.Text.Split(':');							
-							HTTPProxies.Add(new HTTPProxy { url = spl[0], port = int.Parse(spl[1]) });
-						}
-					}
-				}							
-			}
-		}
-		
-		/// <summary>
-		/// Adds proxy usable list 
-		/// </summary>
-		/// <param name='prx'>
-		/// Prx.
-		/// </param>
-		private void AddProxyToUsableList(HTTPProxy prx)
-		{
-			lock(syncRoot)
-			{
-				if(!CheckedProxies.Exists(e => e.url == prx.url && e.port == prx.port))
-				{
-					CheckedProxies.Add(prx);
-				}
-			}
-		}
-		
-		/// <summary>
-		/// Gets the working proxy.
-		/// </summary>
-		/// <returns>
-		/// The working proxy.
-		/// </returns>
-		private void GetWorkingHttpProxies()
-		{
-		begin:
-			
-			Stopwatch stopWatch = new Stopwatch ();
+
+        /// <summary>
+        /// Starts the worker.
+        /// </summary>
+        public void StartWorker()
+        {
+            if(t != null && t.ThreadState == System.Threading.ThreadState.Running)
+            {
+                return;
+            }
+
+            t = new Thread(new ThreadStart(this.GetWorkingHttpProxies));
+            t.Start();
+        }
+        /// <summary>
+        /// Loads the HTTP proxies from RSS feed.
+        /// </summary>
+        private void LoadHTTPProxiesFromRSSFeed()
+        {
+            lock(syncRoot)
+            {
+                using(WebClient wc = new WebClient())
+                {
+                    wc.Headers.Add ("User-Agent", SettingsManager.Instance.settings.HTTPUserAgent);
+
+                    using(XmlReader reader = XmlReader.Create (wc.OpenRead(SettingsManager.Instance.settings.ProxyRSSList)))
+                    {
+                        // Create a new Rss10FeedFormatter object
+                        //Rss10FeedFormatter formatter = new Rss10FeedFormatter ();
+                        // TODO mine uses 2.
+                        Rss20FeedFormatter formatter = new Rss20FeedFormatter();
+
+                        // Parse the feed!
+                        formatter.ReadFrom (reader);
+
+                        foreach (var item in formatter.Feed.Items)
+                        {
+                            string[] spl = item.Title.Text.Split(':');
+                            HTTPProxies.Add(new HTTPProxy { url = spl[0], port = int.Parse(spl[1]) });
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds proxy usable list
+        /// </summary>
+        /// <param name='prx'>
+        /// Prx.
+        /// </param>
+        private void AddProxyToUsableList(HTTPProxy prx)
+        {
+            lock(syncRoot)
+            {
+                if(!CheckedProxies.Exists(e => e.url == prx.url && e.port == prx.port))
+                {
+                    CheckedProxies.Add(prx);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the working proxy.
+        /// </summary>
+        /// <returns>
+        /// The working proxy.
+        /// </returns>
+        private void GetWorkingHttpProxies()
+        {
+            begin:
+
+            Stopwatch stopWatch = new Stopwatch ();
             stopWatch.Start ();
             TimeSpan ts = stopWatch.Elapsed;
             string elapsedTime = "";
-			
-			Log.WriteLine("GetWorkingHttpProxy called");
-			if(HTTPProxies.Count() == 0)
-			{
-				LoadHTTPProxiesFromRSSFeed();
-			}
-			
-			ParallelOptions po = new ParallelOptions 			
-			{ 
-				MaxDegreeOfParallelism = SettingsManager.Instance.settings.MaxThreads
-			};
-			
-			Parallel.ForEach(HTTPProxies, po, prx =>
-			{
-				try 
-				{					
-					CheckProxyIsWorkingEventArgs args = new CheckProxyIsWorkingEventArgs { handled = false, httpp = prx };
-					CheckingIfProxyIsWorking(this, args);
-					if(args.handled)
-					{
-						Log.WriteLine("Proxy passed all tests: " + prx.url + ":" + prx.port.ToString());						
-						AddProxyToUsableList(prx);							
-					}			
-				}
-				catch(Exception ex)
-				{
-					Log.WriteLine("unknown error: " + ex.Message);
-				}
-			});
-		    
-			stopWatch.Stop ();
+
+            Log.WriteLine("GetWorkingHttpProxy called");
+
+            if(HTTPProxies.Count() == 0)
+            {
+                LoadHTTPProxiesFromRSSFeed();
+            }
+
+            ParallelOptions po = new ParallelOptions
+            {
+                MaxDegreeOfParallelism = SettingsManager.Instance.settings.MaxThreads
+            };
+
+            Parallel.ForEach(HTTPProxies, po, prx =>
+            {
+                try
+                {
+                    CheckProxyIsWorkingEventArgs args = new CheckProxyIsWorkingEventArgs { handled = false, httpp = prx };
+                    CheckingIfProxyIsWorking(this, args);
+
+                    if(args.handled)
+                    {
+                        Log.WriteLine("Proxy passed all tests: " + prx.url + ":" + prx.port.ToString());
+                        AddProxyToUsableList(prx);
+                    }
+                }
+
+                catch(Exception ex)
+                {
+                    Log.WriteLine("unknown error: " + ex.Message);
+                }
+            });
+
+            stopWatch.Stop ();
             ts = stopWatch.Elapsed;
-            
-			elapsedTime = String.Format ("{0:00}:{1:00}:{2:00}.{3:00}",
+
+            elapsedTime = String.Format ("{0:00}:{1:00}:{2:00}.{3:00}",
                                          ts.Hours, ts.Minutes, ts.Seconds,
                                          ts.Milliseconds / 10);
-			
-			Log.WriteLine("finished parsing proxies: " + elapsedTime);
-			
-			// keep going
-			lock(syncRoot)
-			{
-				HTTPProxies = new List<HTTPProxy>();
-			}
-			LoadHTTPProxiesFromRSSFeed();				
-			goto begin;
-		}
-				
-		/// <summary>
-		/// Gets a working (tested) http proxy.
-		/// </summary>
-		/// <returns>
-		/// The working http proxy.
-		/// </returns>
-		public HTTPProxy GetWorkingHttpProxy()
-		{
-			lock(syncRoot)
-			{
-				if(SettingsManager.Instance.settings.UseAnonymousProxiesOnly)
-				{					
-					return(CheckedProxies.Where(e => e.enabled == true && string.IsNullOrEmpty(e.IfconfigMeInfo.forwarded)).Single());		
-				}				
-				return(CheckedProxies.Where(e => e.enabled == true).Single());				
-			}
-		}
-		
-		/// <summary>
-		/// Tests the connectivity to ifconfig.me
-		/// </summary>
-		public static bool TestConnectivityToIfconfigMe(CheckProxyIsWorkingEventArgs e)
-		{
-			using(ProxyTestWebClient wc = new ProxyTestWebClient())
-			{
-				wc.Headers.Add ("User-Agent", SettingsManager.Instance.settings.HTTPUserAgent);						
-				// TODO figure out why nat'd browsers cause REMOTE_ADDRESS in PHP to show
-				// nat IP addresss...... I distinctly remember there being something like that...
-				//wc.Headers.Add ("X-Forward-For", "192.168.0.100");
-				//wc.Headers.Add ("X-Real-IP", "8.8.8.8");
-				wc.Proxy = new WebProxy(e.httpp.url, e.httpp.port);
-				
-				using(XmlReader xr = XmlReader.Create(wc.OpenRead("http://ifconfig.me/all.xml")))
-				{						
-					var serializer = new XmlSerializer (typeof(Netcrave.ifconfig.me.schema.info));
-					
-					Netcrave.ifconfig.me.schema.info result = 
-						(Netcrave.ifconfig.me.schema.info)serializer.Deserialize(xr);
-					
-					if(!string.IsNullOrEmpty(result.ip_addr))
-					{
-						//ProxyManager.instance.Log.WriteLine("found proxy, ifconfig.me ipaddr: " + result.ip_addr);
-						e.httpp.IfconfigMeInfo = result;
-						return true;
-					}
-				}
-			}
-			//ProxyManager.instance.Log.WriteLine("failed to connect to ifconfig.me");
-			return false;
-		}
-		
-		/// <summary>
-		/// Saves the tested proxies to XML file.
-		/// </summary>
-		public void SaveTestedProxiesToXMLFile()
-		{
-			lock(syncRoot)
-			{
-				try
-				{
-					if(File.Exists("checked_proxies.xml"))
-					{
-						File.Delete("checked_proxies.xml");
-					}				
-	                using (FileStream file = File.Create ("checked_proxies.xml"))
-	                {
-	                    var serializer = new XmlSerializer (typeof(HTTPProxy[]));
-	                    using (XmlWriter writer = XmlWriter.Create(file, new XmlWriterSettings { Indent = true, NewLineOnAttributes = true }))
-	                    {
-	                        serializer.Serialize (writer, CheckedProxies.ToArray ());
-	                    }
-	                }
-	            }
-	            catch (Exception ex)
-	            {
-	                Log.WriteLine(ex.Message + " : " + ex.StackTrace);
-	            }
-				Log.WriteLine("saved proxies to disk");
-			}
-		}
-	}
+
+            Log.WriteLine("finished parsing proxies: " + elapsedTime);
+
+            // keep going
+            lock(syncRoot)
+            {
+                HTTPProxies = new List<HTTPProxy>();
+            }
+
+            LoadHTTPProxiesFromRSSFeed();
+            goto begin;
+        }
+
+        /// <summary>
+        /// Gets a working (tested) http proxy.
+        /// </summary>
+        /// <returns>
+        /// The working http proxy.
+        /// </returns>
+        public HTTPProxy GetWorkingHttpProxy()
+        {
+            lock(syncRoot)
+            {
+                if(SettingsManager.Instance.settings.UseAnonymousProxiesOnly)
+                {
+                    return(CheckedProxies.Where(e => e.enabled == true && string.IsNullOrEmpty(e.IfconfigMeInfo.forwarded)).Single());
+                }
+
+                return(CheckedProxies.Where(e => e.enabled == true).Single());
+            }
+        }
+
+        /// <summary>
+        /// Tests the connectivity to ifconfig.me
+        /// </summary>
+        public static bool TestConnectivityToIfconfigMe(CheckProxyIsWorkingEventArgs e)
+        {
+            using(ProxyTestWebClient wc = new ProxyTestWebClient())
+            {
+                wc.Headers.Add ("User-Agent", SettingsManager.Instance.settings.HTTPUserAgent);
+                // TODO figure out why nat'd browsers cause REMOTE_ADDRESS in PHP to show
+                // nat IP addresss...... I distinctly remember there being something like that...
+                //wc.Headers.Add ("X-Forward-For", "192.168.0.100");
+                //wc.Headers.Add ("X-Real-IP", "8.8.8.8");
+                wc.Proxy = new WebProxy(e.httpp.url, e.httpp.port);
+
+                using(XmlReader xr = XmlReader.Create(wc.OpenRead("http://ifconfig.me/all.xml")))
+                {
+                    var serializer = new XmlSerializer (typeof(Netcrave.ifconfig.me.schema.info));
+
+                    Netcrave.ifconfig.me.schema.info result =
+                        (Netcrave.ifconfig.me.schema.info)serializer.Deserialize(xr);
+
+                    if(!string.IsNullOrEmpty(result.ip_addr))
+                    {
+                        //ProxyManager.instance.Log.WriteLine("found proxy, ifconfig.me ipaddr: " + result.ip_addr);
+                        e.httpp.IfconfigMeInfo = result;
+                        return true;
+                    }
+                }
+            }
+            //ProxyManager.instance.Log.WriteLine("failed to connect to ifconfig.me");
+            return false;
+        }
+
+        /// <summary>
+        /// Saves the tested proxies to XML file.
+        /// </summary>
+        public void SaveTestedProxiesToXMLFile()
+        {
+            lock(syncRoot)
+            {
+                try
+                {
+                    if(File.Exists("checked_proxies.xml"))
+                    {
+                        File.Delete("checked_proxies.xml");
+                    }
+
+                    using (FileStream file = File.Create ("checked_proxies.xml"))
+                    {
+                        var serializer = new XmlSerializer (typeof(HTTPProxy[]));
+                        using (XmlWriter writer = XmlWriter.Create(file, new XmlWriterSettings { Indent = true, NewLineOnAttributes = true }))
+                        {
+                            serializer.Serialize (writer, CheckedProxies.ToArray ());
+                        }
+                    }
+                }
+
+                catch (Exception ex)
+                {
+                    Log.WriteLine(ex.Message + " : " + ex.StackTrace);
+                }
+
+                Log.WriteLine("saved proxies to disk");
+            }
+        }
+    }
 }
 
