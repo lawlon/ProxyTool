@@ -2,10 +2,11 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
   <MonoDevelop.Ide.Workbench ActiveDocument="ProxyTester/ProxyManager.cs">
     <Files>
-      <File FileName="ProxyTester/Main.cs" Line="9" Column="18" />
+      <File FileName="ProxyTester/Main.cs" Line="48" Column="69" />
       <File FileName="ProxyTester/AssemblyInfo.cs" Line="14" Column="29" />
       <File FileName="ProxyTester/SettingsManager.cs" Line="3" Column="1" />
-      <File FileName="ProxyTester/ProxyManager.cs" Line="2" Column="1" />
+      <File FileName="ProxyTester/ProxyManager.cs" Line="260" Column="10" />
+      <File FileName="ProxyTester/Model/IfconfigMe.cs" Line="41" Column="34" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

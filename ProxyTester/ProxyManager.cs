@@ -10,6 +10,7 @@ using System.ServiceModel.Syndication; // for RSS2.0
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Timers;
 
 /// Author : Paige Thompson (paigeadele@gmail.com)
 /// Proxy Tool
@@ -135,22 +136,21 @@ namespace Netcrave.ProxyTool
         }
 
         /// <summary>
-        /// Gets the working proxy.
+        /// Main worker thread, gets working http proxies, and rechecks them when finished, then starts over. 
         /// </summary>
         /// <returns>
         /// The working proxy.
         /// </returns>
         private void GetWorkingHttpProxies()
         {
+			bool recheckingMode = false;
             begin:
 
             Stopwatch stopWatch = new Stopwatch ();
             stopWatch.Start ();
             TimeSpan ts = stopWatch.Elapsed;
             string elapsedTime = "";
-
-            Log.WriteLine("GetWorkingHttpProxy called");
-
+            
             if(HTTPProxies.Count() == 0)
             {
                 LoadHTTPProxiesFromRSSFeed();
@@ -163,16 +163,24 @@ namespace Netcrave.ProxyTool
 
             Parallel.ForEach(HTTPProxies, po, prx =>
             {
+				Log.WriteLine("GetWorkingHttpProxy new thread");
                 try
                 {
                     CheckProxyIsWorkingEventArgs args = new CheckProxyIsWorkingEventArgs { handled = false, httpp = prx };
                     CheckingIfProxyIsWorking(this, args);
 
-                    if(args.handled)
+                    if(args.handled && !recheckingMode) // not in rechecking mode 
                     {
-                        Log.WriteLine("Proxy passed all tests: " + prx.url + ":" + prx.port.ToString());
+                        Log.WriteLine("Proxy passed all tests: " + prx.url + ":" + prx.port.ToString());						
                         AddProxyToUsableList(prx);
                     }
+					if(recheckingMode) // ing or rechecking mode rather... 
+					{
+						if(!args.handled)
+						{
+							prx.enabled = false;
+						}
+					}
                 }
 
                 catch(Exception ex)
@@ -180,7 +188,7 @@ namespace Netcrave.ProxyTool
                     Log.WriteLine("unknown error: " + ex.Message);
                 }
             });
-
+						
             stopWatch.Stop ();
             ts = stopWatch.Elapsed;
 
@@ -190,12 +198,29 @@ namespace Netcrave.ProxyTool
 
             Log.WriteLine("finished parsing proxies: " + elapsedTime);
 
-            // keep going
-            lock(syncRoot)
-            {
-                HTTPProxies = new List<HTTPProxy>();
-            }
-
+            
+           
+			// Re-check proxies, disable non functioning
+			if(!recheckingMode)
+			{
+				recheckingMode = true;
+				lock(syncRoot)
+				{
+					HTTPProxies = CheckedProxies; 
+					goto begin;
+				}
+			}
+			
+			// save, should probably make this an event 
+			this.SaveTestedProxiesToSquidCachePeerFormat();
+			
+			// rechecked, find more 
+			lock(syncRoot)
+        	{
+        	    HTTPProxies = new List<HTTPProxy>();				
+        	}
+			
+			recheckingMode = false;		
             LoadHTTPProxiesFromRSSFeed();
             goto begin;
         }
@@ -287,7 +312,8 @@ namespace Netcrave.ProxyTool
 		public void SaveTestedProxiesToSquidCachePeerFormat()
 		{
 			  lock(syncRoot)
-            {
+              {
+				List<string> added = new List<string>();
                 try
                 {
                     if(File.Exists("checked_proxies.xml"))
@@ -304,9 +330,13 @@ namespace Netcrave.ProxyTool
                         //}
 						using(StreamWriter sr = new StreamWriter(file))
 						{
-							foreach(HTTPProxy htp in CheckedProxies)
+							foreach(HTTPProxy htp in CheckedProxies.Where(w => w.enabled == true))
 							{
-								sr.WriteLine("cache_peer {0} parent {1} 0 round-robin no-query", htp.url, htp.port);
+								if(!added.Contains(htp.url))
+								{
+									sr.WriteLine("cache_peer {0} parent {1} 0 round-robin no-query", htp.url, htp.port);
+									added.Add(htp.url);
+								}
 							}
 						}
                     }

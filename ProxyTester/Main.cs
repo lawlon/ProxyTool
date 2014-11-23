@@ -43,7 +43,10 @@ namespace Netcrave.ProxyTool.Standalone
             {
                 ProxyManager.Instance.SaveTestedProxiesToXMLFile();
             }
-
+			if(key.Key == ConsoleKey.F2)
+            {
+				ProxyManager.Instance.SaveTestedProxiesToSquidCachePeerFormat();
+			}
             if(key.Key != ConsoleKey.Escape)
             {
                 goto ReadKey;
