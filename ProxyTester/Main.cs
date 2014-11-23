@@ -25,8 +25,8 @@ namespace Netcrave.ProxyTool.Standalone
 {
     class MainClass
     {
-		
-		
+
+
 
         internal static void Main (string[] args)
         {
@@ -43,10 +43,12 @@ namespace Netcrave.ProxyTool.Standalone
             {
                 ProxyManager.Instance.SaveTestedProxiesToXMLFile();
             }
-			if(key.Key == ConsoleKey.F2)
+
+            if(key.Key == ConsoleKey.F2)
             {
-				ProxyManager.Instance.SaveTestedProxiesToSquidCachePeerFormat();
-			}
+                ProxyManager.Instance.SaveTestedProxiesToSquidCachePeerFormat();
+            }
+
             if(key.Key != ConsoleKey.Escape)
             {
                 goto ReadKey;
