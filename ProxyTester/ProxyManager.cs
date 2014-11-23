@@ -170,15 +170,23 @@ namespace Netcrave.ProxyTool
                     CheckProxyIsWorkingEventArgs args = new CheckProxyIsWorkingEventArgs { handled = false, httpp = prx };
                     CheckingIfProxyIsWorking(this, args);
 
-                    if(args.handled && !recheckingMode) // not in rechecking mode
+                    if(args.handled)
                     {
-                        Log.WriteLine("Proxy passed all tests: " + prx.url + ":" + prx.port.ToString());
-                        AddProxyToUsableList(prx);
+                        if(!recheckingMode)
+                        {
+                            Log.WriteLine("Proxy passed all tests: " + prx.url + ":" + prx.port.ToString());
+                            AddProxyToUsableList(prx);
+                        }
+
+                        else
+                        {
+                            prx.enabled = true;
+                        }
                     }
 
-                    if(recheckingMode) // ing or rechecking mode rather...
+                    else
                     {
-                        if(!args.handled)
+                        if(recheckingMode)
                         {
                             prx.enabled = false;
                         }
